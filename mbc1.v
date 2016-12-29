@@ -32,19 +32,19 @@ module mbc1
 		GB_RST,						// GameBoy Reset
 );
 
-input	 [17:0]	SW;
+input  [17:0]	SW;
 
 output [8:0]	LEDG;					//	LED Green[8:0]
 output [17:0]	LEDR;					//	LED Red[17:0]
 
-inout	 [7:0]	FL_DQ;				//	FLASH Data bus 8 Bits
+inout  [7:0]	FL_DQ;				//	FLASH Data bus 8 Bits
 output [21:0]	FL_ADDR;				//	FLASH Address bus 22 Bits
 output			FL_WE_N;				//	FLASH Write Enable
 output			FL_RST_N;			//	FLASH Reset
 output			FL_OE_N;				//	FLASH Output Enable
 output			FL_CE_N;				//	FLASH Chip Enable
 
-inout	 [15:0]	SRAM_DQ;				//	SRAM Data bus 16 Bits
+inout  [15:0]	SRAM_DQ;				//	SRAM Data bus 16 Bits
 output [17:0]	SRAM_ADDR;				//	SRAM Address bus 18 Bits
 output			SRAM_UB_N;				//	SRAM High-byte Data Mask
 output			SRAM_LB_N;				//	SRAM Low-byte Data Mask 
@@ -52,12 +52,12 @@ output			SRAM_WE_N;				//	SRAM Write Enable
 output			SRAM_CE_N;				//	SRAM Chip Enable
 output			SRAM_OE_N;				//	SRAM Output Enable
 
-inout [7:0]	GB_DQ;				// GameBoy Data bus 8 Bits
+inout  [7:0]	GB_DQ;				// GameBoy Data bus 8 Bits
 input  [15:0]	GB_ADDR;				// GameBoy Address bus 16 Bits
-input				GB_WR;				// GameBoy Write Enable
-input				GB_RD;				// GameBoy Read Enable
-input				GB_CLK;				// GameBoy Clock
-input				GB_CS;				// GameBoy Chip Select
+input			GB_WR;				// GameBoy Write Enable
+input			GB_RD;				// GameBoy Read Enable
+input			GB_CLK;				// GameBoy Clock
+input			GB_CS;				// GameBoy Chip Select
 output			GB_RST;				// GameBoy Reset
 //input				GB_RST;
 
@@ -87,27 +87,27 @@ wire [6:0] ROM_BANK_MYSTERY; //For MBC1 Bug Emulation
 assign ROM_BANK_MYSTERY[6:5] = ROM_BANK[6:5];
 assign ROM_BANK_MYSTERY[4:0] = (ROM_BANK[4:0]==0) ? 1 : ROM_BANK[4:0]; 
 
-assign ROM_ADDR_EN =  (GB_ADDR >= 16'h0000)&(GB_ADDR <= 16'h7FFF);
-assign RAM_ADDR_EN =  (GB_ADDR >= 16'hA000)&(GB_ADDR <= 16'hBFFF);
+assign ROM_ADDR_EN =  (GB_ADDR >= 16'h0000)&(GB_ADDR <= 16'h7FFF); //Request Addr in ROM range
+assign RAM_ADDR_EN =  (GB_ADDR >= 16'hA000)&(GB_ADDR <= 16'hBFFF); //Request Addr in RAM range
 
-assign ROM_BANK_CLK = (GB_ADDR[15:13]==3'b001)&(GB_WR==0) ? 0 : 1;
-assign RAM_BANK_CLK = (GB_ADDR[15:13]==3'b010)&(GB_WR==0) ? 0 : 1;
-assign BANK_SEL_CLK = (GB_ADDR[15:13]==3'b011)&(GB_WR==0) ? 0 : 1;
-assign RAM_EN_CLK   = (GB_ADDR[15:13]==3'b000)&(GB_WR==0) ? 0 : 1;
+assign ROM_BANK_CLK = (GB_ADDR[15:13]==3'b001)&(GB_WR==0) ? 0 : 1; //ROM Bank Register Access
+assign RAM_BANK_CLK = (GB_ADDR[15:13]==3'b010)&(GB_WR==0) ? 0 : 1; //RAM Bank Register Access
+assign BANK_SEL_CLK = (GB_ADDR[15:13]==3'b011)&(GB_WR==0) ? 0 : 1; //Bank Select Register Access
+assign RAM_EN_CLK   = (GB_ADDR[15:13]==3'b000)&(GB_WR==0) ? 0 : 1; //RAM Enable Register Access
 
-assign ROM_OE = (((ROM_ADDR_EN)&(GB_RD==0))|(GB_RST==0)) ? 1 : 0;
-assign RAM_OE = ((RAM_ADDR_EN)&(GB_RD==0)&(RAM_EN==4'hA)&(GB_RST==1)) ? 1 : 0;
-assign DQ_OE = ROM_OE | RAM_OE;
+assign ROM_OE = (((ROM_ADDR_EN)&(GB_RD==0))|(GB_RST==0)) ? 1 : 0; //ROM output enable
+assign RAM_OE = ((RAM_ADDR_EN)&(GB_RD==0)&(RAM_EN==4'hA)&(GB_RST==1)) ? 1 : 0; //RAM output enable
+assign DQ_OE = ROM_OE | RAM_OE; //Data bus output enable
 
-assign GB_DQ = DQ_OE ? (ROM_OE ? FL_DQ : SRAM_DQ[7:0]) : 8'hzz;
+assign GB_DQ = DQ_OE ? (ROM_OE ? FL_DQ : SRAM_DQ[7:0]) : 8'hzz; //Data bus connected to GB
 
-assign FL_ADDR[21] = 0;
+assign FL_ADDR[21] = 0; //Not used
 assign FL_ADDR[20:14] = ((GB_ADDR[14]==0)|(GB_RST==0)) ? 0 : ROM_BANK[6:0];
 assign FL_ADDR[13:0] = GB_ADDR[13:0];
 
 assign SRAM_ADDR[14:13] = RAM_BANK;
 assign SRAM_ADDR[12:0] = GB_ADDR[12:0];
-assign SRAM_DQ[7:0] = RAM_ADDR_EN ? ((GB_RD==0) ? 8'hzz : GB_DQ) : 8'hzz;
+assign SRAM_DQ[7:0] = RAM_ADDR_EN ? ((GB_RD==0) ? 8'hzz : GB_DQ) : 8'hzz; //RAM can be written
 
 assign FL_RST_N = 1;
 assign FL_OE_N = 0;
