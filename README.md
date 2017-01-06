@@ -6,3 +6,7 @@ This is a simple implemtion of MBC1 on FPGA. But current code is not designed to
 ## Usage
 
 Use this code on any FPGA board with NOR flash/EEPROM and SRAM(if needed). Flash the ROM into ROM, connect all signals labeled GB to gameboy cartridge connector, power the FPGA then GB, done.
+
+## License
+
+WTFPL
